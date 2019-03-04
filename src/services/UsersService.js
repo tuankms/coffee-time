@@ -37,6 +37,13 @@ class UserService {
         console.log('Error getting document:', error);
       });
     }
+
+    randomUser = (users) => {
+      if (!users) {
+        return null;
+      }
+      return users[Math.floor(Math.random() * users.length)];
+    }
 }
 
 export default new UserService();

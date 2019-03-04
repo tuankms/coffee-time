@@ -11,10 +11,6 @@
     <div class="result" v-if="currentUser">
       <CoffeeTimePanel :message="viewResultMessage()"></CoffeeTimePanel>
     </div>
-
-    <div>
-      {{users}}
-    </div>
   </div>
 </template>
 
@@ -90,7 +86,7 @@ export default {
         return;
       }
 
-      const suggestedUserId = this.randomUser(listUserSatify);
+      const suggestedUserId = userService.randomUser(listUserSatify);
       const suggestedUser = this.users.find(function(u) {
         return getKeyValue(u) === suggestedUserId;
       });
@@ -103,13 +99,6 @@ export default {
         fullName: currentUser.fullName,
         relationship: currentUser.relationship
       });
-    },
-    randomUser: function(users) {
-      if (!users) {
-        return null;
-      }
-
-      return users[Math.floor(Math.random() * users.length)];
     },
     addNewUser: function(key, userFullName) {
       userService.create(key, userFullName);
