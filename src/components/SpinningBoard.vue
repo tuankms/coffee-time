@@ -1,37 +1,15 @@
 <template>
   <div class="spinningBoard">
-    <!-- TODO Just for testing data loading. Remove this div -->
-    <!-- <div class="userList">
-      <ul>
-        <li v-for="user in users" v-bind:key="user.fullName">
-          {{ user.fullName }}
-          <button @click="deleteUser(user)">
-            Remove
-          </button>
-          <button @click="getUserById(user['.key'])">
-            GET
-          </button>
-        </li>
-      </ul>
-    </div> -->
-
-    <div class="board">
+    <div class="inputForm">
       <form @submit.prevent="spinHandler(currentUserId)">
         <h2>Please input your name ^ ^</h2>
         <input v-model="currentUserId" placeholder="Your name" class="input">
         <button type="submit">Spin Spin...</button>
       </form>
+    </div>    
 
-      <div v-if="currentUser">
-        <div v-if="isExistRelationship()">You don't get coffee with anyone</div>
-        <div v-if="!isExistRelationship()">You already have coffee with:</div>
-        <ul>
-          <li v-for="relationUser in currentUser.relationship" v-bind:key="relationUser">
-            {{ relationUser }}
-          </li>
-        </ul>
-        <div>{{viewResultMessage()}}</div>  
-      </div>      
+    <div class="result" v-if="currentUser">
+      <CoffeeTimePanel :message="viewResultMessage()"></CoffeeTimePanel>
     </div>
   </div>
 </template>
@@ -39,8 +17,13 @@
 <script>
 import db from '../firebase';
 
+import CoffeeTimePanel from './CoffeeTimePanel';
+
 export default {
   name: 'SpinningBoard',
+  components: {
+    'CoffeeTimePanel': CoffeeTimePanel
+  },
   data () {
     return {
       users: [],
@@ -54,9 +37,6 @@ export default {
     };
   },
   methods: {
-    isExistRelationship() {
-      return this.currentUser && this.currentUser.relationship.length === 0;
-    },
     spinHandler: function(currentUserId) {
       this.suggestedUser = null;
       console.log(currentUserId);
@@ -179,5 +159,15 @@ export default {
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped lang="scss">
+  .spinningBoard {
 
+    .inputForm {
+      padding: 5px;
+    }
+
+    .result {
+      padding: 5px;
+    }
+
+  }
 </style>
