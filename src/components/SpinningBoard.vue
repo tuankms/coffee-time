@@ -27,6 +27,7 @@ export default {
   data () {
     return {
       users: [],
+      currentUserId: null,
       currentUser: null,
       suggestedUser: null,
     };
@@ -39,23 +40,18 @@ export default {
   methods: {
     spinHandler: function(currentUserId) {
       this.suggestedUser = null;
-      console.log(currentUserId);
 
       const currentUser = this.users.find(function(u) {
         return u['.key'] === currentUserId;
       });
 
       if (!currentUser) {
-        alert('Cant find this user !');
         this.currentUser = null;
         return;
       }
 
-      console.log('currentUser', currentUser);
-      console.log('currentUser.relationship', currentUser.relationship);
-
       this.currentUser = currentUser;
-      this.getSuggestedUser();
+      this.getSuggestedUser(this.currentUser);
     },
     viewResultMessage: function() {
       if (!this.suggestedUser) {
@@ -65,27 +61,22 @@ export default {
       const numberOfRelationship = this.currentUser.relationship.length;
       return `Get coffee with: ${this.suggestedUser.fullName}, here’s how many times you’ve had coffee with them: ${numberOfRelationship}`;
     },
-    getSuggestedUser: function () {
-      if (!this.currentUser) {
+    getSuggestedUser: function (currentUser) {
+      if (!currentUser) {
         return null;
       }
 
-      const currentRelationShip = this.currentUser.relationship;
+      const currentRelationShip = currentUser.relationship;
       const allUsers = this.users.map(function(u) {
         return u['.key']
       });
 
-      console.log('currentRelationShip', currentRelationShip);
-      console.log('allUsers', allUsers);
-
-      let that = this;
-      const listUserSatify = allUsers.filter(function(curUserId) {
-        const index = currentRelationShip.findIndex(function(reUserId) {
+      const listUserSatify = allUsers.filter((curUserId) => {
+        const index = currentRelationShip.findIndex((reUserId) => {
           return reUserId === curUserId;
         });
 
-        console.log(index);
-        return index === -1 && curUserId !== that.currentUserId;
+        return index === -1 && curUserId !== this.currentUserId;
       });
 
       if (listUserSatify.length === 0) {
@@ -93,21 +84,18 @@ export default {
         return;
       }
 
-      console.log('listUserSatify', listUserSatify);
-
       const suggestedUserId = this.randomUser(listUserSatify);
       const suggestedUser = this.users.find(function(u) {
         return u['.key'] === suggestedUserId;
       });
 
-      console.log('suggestedUser', suggestedUser);
       this.suggestedUser = suggestedUser;
 
-      this.currentUser.relationship.push(suggestedUser['.key']);
+      currentUser.relationship.push(suggestedUser['.key']);
 
-      this.updateUser(this.currentUser['.key'], {
-        fullName: this.currentUser.fullName,
-        relationship: this.currentUser.relationship
+      this.updateUser(currentUser['.key'], {
+        fullName: currentUser.fullName,
+        relationship: currentUser.relationship
       });
     },
     randomUser: function(users) {
@@ -123,14 +111,14 @@ export default {
     getUserById: function(docId) {
       var docRef = db.collection('users').doc(docId);
 
-      docRef.get().then(function(doc) {
+      docRef.get().then((doc) => {
         if (doc.exists) {
             console.log('Document data:', doc.data());
         } else {
             // doc.data() will be undefined in this case
             console.log('No such document!');
         }
-      }).catch(function(error) {
+      }).catch((error) => {
         console.log('Error getting document:', error);
       });
     },
@@ -138,20 +126,19 @@ export default {
       db.collection("users").doc(key).set({
           fullName: userFullName,
           relationship: []
-      }).then(function() {
+      }).then(() => {
           this.users = this.getAllUsers('users');
-      }).bind(this);
+      });
     },
     updateUser: function(key, user) {
       db.collection("users").doc(key).update({
         fullName: user.fullName,
         relationship: user.relationship
-      }).then(function() {
-          alert('Document successfully updated!');
+      }).then(() => {
           this.users = this.getAllUsers('users');
-      }).catch(function(error) {
+      }).catch((error) => {
           console.error('Error removing document: ', error);
-      }).bind(this);
+      });
     }
   }
 };
