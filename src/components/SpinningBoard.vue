@@ -11,11 +11,17 @@
     <div class="result" v-if="currentUser">
       <CoffeeTimePanel :message="viewResultMessage()"></CoffeeTimePanel>
     </div>
+
+    <div>
+      {{users}}
+    </div>
   </div>
 </template>
 
 <script>
-import db from '../firebase';
+import db from '@/firebase';
+import { getKeyValue } from '@/utils/firestore';
+import userService from '@/services/UsersService';
 
 import CoffeeTimePanel from './CoffeeTimePanel';
 
@@ -34,15 +40,15 @@ export default {
   },
   firestore() {
     return {
-      users: this.getAllUsers(),
+      users: userService.getCollection(),
     };
   },
   methods: {
     spinHandler: function(currentUserId) {
       this.suggestedUser = null;
 
-      const currentUser = this.users.find(function(u) {
-        return u['.key'] === currentUserId;
+      const currentUser = this.users.find((u) => {
+        return getKeyValue(u) === currentUserId;
       });
 
       if (!currentUser) {
@@ -68,7 +74,7 @@ export default {
 
       const currentRelationShip = currentUser.relationship;
       const allUsers = this.users.map(function(u) {
-        return u['.key']
+        return getKeyValue(u);
       });
 
       const listUserSatify = allUsers.filter((curUserId) => {
@@ -86,14 +92,14 @@ export default {
 
       const suggestedUserId = this.randomUser(listUserSatify);
       const suggestedUser = this.users.find(function(u) {
-        return u['.key'] === suggestedUserId;
+        return getKeyValue(u) === suggestedUserId;
       });
 
       this.suggestedUser = suggestedUser;
 
-      currentUser.relationship.push(suggestedUser['.key']);
+      currentUser.relationship.push(getKeyValue(suggestedUser));
 
-      this.updateUser(currentUser['.key'], {
+      this.updateUser(getKeyValue(currentUser), {
         fullName: currentUser.fullName,
         relationship: currentUser.relationship
       });
@@ -105,40 +111,11 @@ export default {
 
       return users[Math.floor(Math.random() * users.length)];
     },
-    getAllUsers: function() {
-      return db.collection('users');
-    },
-    getUserById: function(docId) {
-      var docRef = db.collection('users').doc(docId);
-
-      docRef.get().then((doc) => {
-        if (doc.exists) {
-            console.log('Document data:', doc.data());
-        } else {
-            // doc.data() will be undefined in this case
-            console.log('No such document!');
-        }
-      }).catch((error) => {
-        console.log('Error getting document:', error);
-      });
-    },
     addNewUser: function(key, userFullName) {
-      db.collection("users").doc(key).set({
-          fullName: userFullName,
-          relationship: []
-      }).then(() => {
-          this.users = this.getAllUsers('users');
-      });
+      userService.create(key, userFullName);
     },
     updateUser: function(key, user) {
-      db.collection("users").doc(key).update({
-        fullName: user.fullName,
-        relationship: user.relationship
-      }).then(() => {
-          this.users = this.getAllUsers('users');
-      }).catch((error) => {
-          console.error('Error removing document: ', error);
-      });
+      userService.update(key, user);
     }
   }
 };
@@ -147,7 +124,6 @@ export default {
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped lang="scss">
   .spinningBoard {
-
     .inputForm {
       padding: 5px;
     }
@@ -155,6 +131,5 @@ export default {
     .result {
       padding: 5px;
     }
-
   }
 </style>
