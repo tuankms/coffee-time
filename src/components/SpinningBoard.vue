@@ -25,14 +25,13 @@
       <div v-if="currentUser">
         <div v-if="isExistRelationship()">You don't get coffee with anyone</div>
         <div v-if="!isExistRelationship()">You already have coffee with:</div>
-          <ul>
-            <li v-for="relationUser in currentUser.relationship" v-bind:key="relationUser">
-              {{ relationUser }}
-            </li>
-          </ul>
-      </div>
-
-      <div v-if="suggestedUser">{{viewResultMessage()}}</div>
+        <ul>
+          <li v-for="relationUser in currentUser.relationship" v-bind:key="relationUser">
+            {{ relationUser }}
+          </li>
+        </ul>
+        <div>{{viewResultMessage()}}</div>  
+      </div>      
     </div>
   </div>
 </template>
@@ -44,6 +43,7 @@ export default {
   name: 'SpinningBoard',
   data () {
     return {
+      users: [],
       currentUser: null,
       suggestedUser: null,
     };
@@ -78,7 +78,7 @@ export default {
       this.getSuggestedUser();
     },
     viewResultMessage: function() {
-      if (this.suggestedUser.length === 0) {
+      if (!this.suggestedUser) {
         return "You've already caffeinated with everyone!";
       }
 
@@ -109,7 +109,7 @@ export default {
       });
 
       if (listUserSatify.length === 0) {
-        this.suggestedUser = [];
+        this.suggestedUser = null;
         return;
       }
 
@@ -122,6 +122,13 @@ export default {
 
       console.log('suggestedUser', suggestedUser);
       this.suggestedUser = suggestedUser;
+
+      this.currentUser.relationship.push(suggestedUser['.key']);
+
+      this.updateUser(this.currentUser['.key'], {
+        fullName: this.currentUser.fullName,
+        relationship: this.currentUser.relationship
+      });
     },
     randomUser: function(users) {
       if (!users) {
@@ -147,8 +154,24 @@ export default {
         console.log('Error getting document:', error);
       });
     },
-    addUser: function() {
-      // TODO Implement this function
+    addNewUser: function(key, userFullName) {
+      db.collection("users").doc(key).set({
+          fullName: userFullName,
+          relationship: []
+      }).then(function() {
+          this.users = this.getAllUsers('users');
+      }).bind(this);
+    },
+    updateUser: function(key, user) {
+      db.collection("users").doc(key).update({
+        fullName: user.fullName,
+        relationship: user.relationship
+      }).then(function() {
+          alert('Document successfully updated!');
+          this.users = this.getAllUsers('users');
+      }).catch(function(error) {
+          console.error('Error removing document: ', error);
+      }).bind(this);
     }
   }
 };
