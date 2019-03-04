@@ -1,16 +1,39 @@
 <template>
   <div class="hello">
-    {{msg}}
+    <ul class="userList">
+      <li v-for="user in users" v-bind:key="user.fullName">
+        {{ user.fullName }}
+        <button @click="deleteUser(user)">
+          Remove
+        </button>
+      </li>
+    </ul>
   </div>
 </template>
 
 <script>
+import { db } from '../firebase';
+
 export default {
   name: 'HelloWorld',
   data () {
     return {
       msg: 'Welcome to Your Vue.js App'
     };
+  },
+  firestore () {
+    return {
+      users: db.collection('users')
+    };
+  },
+  methods: {
+    addUser: function () {
+      // TODO implement it
+    },
+    deleteUser: function (user) {
+      // TODO implement it
+      console.log(user);
+    }
   }
 };
 </script>

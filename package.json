@@ -9,7 +9,10 @@
     "test:unit": "vue-cli-service test:unit"
   },
   "dependencies": {
-    "vue": "^2.6.6"
+    "@firebase/app": "^0.3.10",
+    "@firebase/firestore": "^1.0.5",
+    "vue": "^2.6.6",
+    "vue-firestore": "^0.3.21"
   },
   "devDependencies": {
     "@vue/cli-plugin-babel": "^3.4.0",
