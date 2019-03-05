@@ -34,14 +34,14 @@
 </template>
 
 <script>
-import { getKeyValue } from "@/utils/firestore";
-import { uniqueArray } from "@/utils/collection";
-import userService from "@/services/UsersService";
+import { getKeyValue } from '@/utils/firestore';
+import { uniqueArray } from '@/utils/collection';
+import userService from '@/services/UsersService';
 
-import CoffeeTimePanel from "./CoffeeTimePanel";
+import CoffeeTimePanel from './CoffeeTimePanel';
 
 export default {
-  name: "SpinningBoard",
+  name: 'SpinningBoard',
   components: {
     CoffeeTimePanel: CoffeeTimePanel
   },
@@ -58,7 +58,12 @@ export default {
   },
   firestore() {
     return {
-      users: userService.getCollection()
+      users: {
+        // collection reference.
+        ref: userService.getCollection(),
+        // [TODO] Try to bind the collection as an object to improve performance.
+        objects: false
+      }
     };
   },
   methods: {
