@@ -35,6 +35,7 @@
 
 <script>
 import { getKeyValue } from "@/utils/firestore";
+import { uniqueArray } from "@/utils/collection";
 import userService from "@/services/UsersService";
 
 import CoffeeTimePanel from "./CoffeeTimePanel";
@@ -118,15 +119,26 @@ export default {
         return;
       }
 
-      // Add new partner
+      // Add new partner to current user
       const suggestedUserId = userService.randomUser(suggestedPartnerIds);
       currentPartnerIds.push(suggestedUserId);
+
+      // FIXME Need to improve performance of finding suggested user
       this.suggestedUser = this.users.find(function(u) {
         return getKeyValue(u) === suggestedUserId;
       });
 
+      // Add current user as a partner of suggested user, too
+      const suggestedUserPartners = this.suggestedUser.relationship;
+      suggestedUserPartners.push(this.currentUserId);
+      this.suggestedUser.relationship = uniqueArray(suggestedUserPartners);
+
       userService.update(getKeyValue(currentUser), {
         ...currentUser
+      });
+
+      userService.update(suggestedUserId, {
+        ...this.suggestedUser
       });
     },
     addNewUser: function(userId) {
