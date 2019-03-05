@@ -1,4 +1,4 @@
-import usersService from '@/services/UsersService';
+import usersService from '@/services/UserService';
 
 describe('UsersService.spec', () => {
   it('Invokes getAllUserIds() successfully - Return a list of Ids', () => {

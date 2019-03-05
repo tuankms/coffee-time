@@ -1,7 +1,7 @@
 import { shallowMount } from '@vue/test-utils';
 import SpinningBoard from '@/components/SpinningBoard.vue';
 
-const userServiceMock = jest.mock('@/services/UsersService', () => {
+const userServiceMock = jest.mock('@/services/UserService', () => {
   return {
     randomUser: (users) => {
       if (!users) {

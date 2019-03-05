@@ -33,8 +33,7 @@
 
 <script>
 export default {
-    name: 'CoffeeTimePanel',
-    props: ['message']
+  name: 'CoffeeTimePanel',
+  props: ['message']
 };
 </script>
-

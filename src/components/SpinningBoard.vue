@@ -13,7 +13,7 @@
 
         <div class="signupMsg">
           or
-          <a href="#" @click.prevent="openSignup()">Sign up</a> if you are a new commer
+          <a href="#" @click.prevent="openSignup()">Sign up</a> if you are a newcomer
         </div>
       </div>
 
@@ -36,7 +36,7 @@
 <script>
 import { getKeyValue } from '@/utils/firestore';
 import { uniqueArray } from '@/utils/collection';
-import userService from '@/services/UsersService';
+import userService from '@/services/UserService';
 
 import CoffeeTimePanel from './CoffeeTimePanel';
 
