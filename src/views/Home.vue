@@ -1,6 +1,6 @@
 <template>
   <div>
-    <img alt="Vue logo" width="200px" src="@/assets/cf-time.jpg">
+    <img alt='Coffee Time logo' width='200px' src='@/assets/cf-time.jpg'>
     <SpingningBoard></SpingningBoard>
   </div>
 </template>

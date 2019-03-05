@@ -1,5 +1,6 @@
 import db from '@/firebase';
 import { getKeyValue } from '@/utils/firestore';
+import { isEmpty } from '@/utils/collection';
 
 const COLLECTION_NAME = 'users';
 
@@ -43,7 +44,7 @@ class UserService {
   }
 
   randomUser = (users) => {
-    if (!users) {
+    if (!users || isEmpty(users)) {
       return null;
     }
     return users[Math.floor(Math.random() * users.length)];
