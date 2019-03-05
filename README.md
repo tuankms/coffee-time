@@ -1,5 +1,10 @@
 # Coffee Time
 
+### Tech stack
+
+- VueJS (3.4.1)
+- Cloud Firestore
+
 ### Project Structure
 
 ```sh
