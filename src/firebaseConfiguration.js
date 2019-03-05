@@ -1,3 +1,4 @@
+// FIXME The firebase configuration should be injected at build time and base on Environment
 export default {
   apiKey: 'AIzaSyCCdgMEMpU6md3IjSMEnuQdg6C3a52sQrs',
   authDomain: 'coffee-time-9ee6c.firebaseapp.com',

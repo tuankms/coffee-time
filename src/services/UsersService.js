@@ -1,49 +1,61 @@
 import db from '@/firebase';
+import { getKeyValue } from '@/utils/firestore';
 
 const COLLECTION_NAME = 'users';
 
 class UserService {
-    getCollection = () => {
-      return db.collection(COLLECTION_NAME);
-    };
+  getCollection = () => {
+    return db.collection(COLLECTION_NAME);
+  };
 
-    update = (key, user) => {
-      return this.getCollection().doc(key).update({
-        fullName: user.fullName,
-        relationship: user.relationship
-      }).catch((error) => {
-        console.error('Error when removing document: ', error);
-      });
-    };
+  update = (userId, user) => {
+    // TODO should validate user object before updating
+    const { fullName, relationship } = user;
 
-    create = (key, userFullName) => {
-      this.getCollection().doc(key).set({
-        fullName: userFullName,
-        relationship: []
-      }).catch((error) => {
-        console.error('Error when adding document: ', error);
-      });
-    };
+    return this.getCollection().doc(userId).update({
+      fullName,
+      relationship
+    }).catch((error) => {
+      console.error('Error when removing document: ', error);
+    });
+  };
 
-    get = (userId) => {
-      this.getCollection().doc(userId).get().then((doc) => {
-        if (doc.exists) {
-          console.log('Document data:', doc.data());
-        } else {
+  create = (userId, fullName) => {
+    return this.getCollection().doc(userId).set({
+      fullName,
+      relationship: []
+    }).catch((error) => {
+      console.error('Error when adding document: ', error);
+    });
+  };
+
+  get = (userId) => {
+    return this.getCollection().doc(userId).get().then((doc) => {
+      if (doc.exists) {
+        console.log('Document data:', doc.data());
+      } else {
         // doc.data() will be undefined in this case
-          console.log('No such document!');
-        }
-      }).catch((error) => {
-        console.log('Error getting document:', error);
-      });
-    }
-
-    randomUser = (users) => {
-      if (!users) {
-        return null;
+        console.log('No such document!');
       }
-      return users[Math.floor(Math.random() * users.length)];
+    }).catch((error) => {
+      console.log('Error getting document:', error);
+    });
+  }
+
+  randomUser = (users) => {
+    if (!users) {
+      return null;
     }
+    return users[Math.floor(Math.random() * users.length)];
+  }
+
+  getAllUserIds = (users) => {
+    if (!users) return [];
+
+    return users.map((u) => {
+      return getKeyValue(u);
+    });
+  }
 }
 
 export default new UserService();

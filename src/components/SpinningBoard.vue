@@ -1,49 +1,78 @@
 <template>
   <div class="spinningBoard">
-    <div class="inputForm">
-      <form @submit.prevent="spinHandler(currentUserId)">
-        <h2>Please input your name ^ ^</h2>
-        <input v-model="currentUserId" placeholder="Your name" class="input">
-        <button type="submit">Spin Spin...</button>
-      </form>
-    </div>    
+    <div class="title">
+      <h2>Please input your name ^ ^</h2>
+    </div>
 
-    <div class="result" v-if="currentUser">
-      <CoffeeTimePanel :message="viewResultMessage()"></CoffeeTimePanel>
+    <div class="body">
+      <div v-if="!hasShowSignup" class="spinningForm">
+        <form @submit.prevent="spin(currentUserId)">
+          <input v-model="currentUserId" placeholder="Your name" class="input">
+          <button type="submit">Spin Spin...</button>
+        </form>
+
+        <div class="signupMsg">
+          or
+          <a href="#" @click.prevent="openSignup()">Sign up</a> if you are a new commer
+        </div>
+      </div>
+
+      <div v-if="hasShowSignup" class="newUserForm">
+        <div class="signupForm">
+          <form @submit.prevent="addNewUser(newUserId)">
+            <input v-model="newUserId" placeholder="Your name" class="input">
+            <button type="submit">Signup and Spin now</button>
+          </form>
+        </div>
+      </div>
+
+      <div v-if="hasShowResult" class="result">
+        <CoffeeTimePanel :message="viewResultMessage()"></CoffeeTimePanel>
+      </div>
     </div>
   </div>
 </template>
 
 <script>
-import db from '@/firebase';
-import { getKeyValue } from '@/utils/firestore';
-import userService from '@/services/UsersService';
+import { getKeyValue } from "@/utils/firestore";
+import userService from "@/services/UsersService";
 
-import CoffeeTimePanel from './CoffeeTimePanel';
+import CoffeeTimePanel from "./CoffeeTimePanel";
 
 export default {
-  name: 'SpinningBoard',
+  name: "SpinningBoard",
   components: {
-    'CoffeeTimePanel': CoffeeTimePanel
+    CoffeeTimePanel: CoffeeTimePanel
   },
-  data () {
+  data() {
     return {
       users: [],
       currentUserId: null,
       currentUser: null,
       suggestedUser: null,
+      newUserId: null,
+      hasShowSignup: false,
+      hasShowResult: false
     };
   },
   firestore() {
     return {
-      users: userService.getCollection(),
+      users: userService.getCollection()
     };
   },
   methods: {
-    spinHandler: function(currentUserId) {
+    openSignup: function() {
+      this.hasShowSignup = true;
+
+      // Clean previous state before signup
+      this.hasShowResult = false;
+      this.currentUserId = null;
+      this.currentUser = null;
+    },
+    spin: function(currentUserId) {
       this.suggestedUser = null;
 
-      const currentUser = this.users.find((u) => {
+      const currentUser = this.users.find(u => {
         return getKeyValue(u) === currentUserId;
       });
 
@@ -54,6 +83,8 @@ export default {
 
       this.currentUser = currentUser;
       this.getSuggestedUser(this.currentUser);
+
+      this.hasShowResult = true;
     },
     viewResultMessage: function() {
       if (!this.suggestedUser) {
@@ -61,50 +92,53 @@ export default {
       }
 
       const numberOfRelationship = this.currentUser.relationship.length;
-      return `Get coffee with: ${this.suggestedUser.fullName}, here’s how many times you’ve had coffee with them: ${numberOfRelationship}`;
+      return `Get coffee with: ${
+        this.suggestedUser.fullName
+      }, here’s how many times you’ve had coffee with them: ${numberOfRelationship}`;
     },
-    getSuggestedUser: function (currentUser) {
+    getSuggestedUser: function(currentUser) {
       if (!currentUser) {
         return null;
       }
 
-      const currentRelationShip = currentUser.relationship;
-      const allUsers = this.users.map(function(u) {
-        return getKeyValue(u);
-      });
+      const { relationship: currentPartnerIds } = currentUser;
+      const allUserIds = userService.getAllUserIds(this.users);
 
-      const listUserSatify = allUsers.filter((curUserId) => {
-        const index = currentRelationShip.findIndex((reUserId) => {
+      // Find partners
+      const suggestedPartnerIds = allUserIds.filter(curUserId => {
+        const index = currentPartnerIds.findIndex(reUserId => {
           return reUserId === curUserId;
         });
 
         return index === -1 && curUserId !== this.currentUserId;
       });
 
-      if (listUserSatify.length === 0) {
+      if (suggestedPartnerIds.length === 0) {
         this.suggestedUser = null;
         return;
       }
 
-      const suggestedUserId = userService.randomUser(listUserSatify);
-      const suggestedUser = this.users.find(function(u) {
+      // Add new partner
+      const suggestedUserId = userService.randomUser(suggestedPartnerIds);
+      currentPartnerIds.push(suggestedUserId);
+      this.suggestedUser = this.users.find(function(u) {
         return getKeyValue(u) === suggestedUserId;
       });
 
-      this.suggestedUser = suggestedUser;
-
-      currentUser.relationship.push(getKeyValue(suggestedUser));
-
-      this.updateUser(getKeyValue(currentUser), {
-        fullName: currentUser.fullName,
-        relationship: currentUser.relationship
+      userService.update(getKeyValue(currentUser), {
+        ...currentUser
       });
     },
-    addNewUser: function(key, userFullName) {
-      userService.create(key, userFullName);
-    },
-    updateUser: function(key, user) {
-      userService.update(key, user);
+    addNewUser: function(userId) {
+      // We assume userId and fullname is the same
+      const fullName = userId;
+      userService.create(userId, fullName).then(() => {
+        this.hasShowSignup = false;
+        this.newUserId = null;
+        this.currentUserId = userId;
+
+        this.spin(userId);
+      });
     }
   }
 };
@@ -112,13 +146,19 @@ export default {
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped lang="scss">
-  .spinningBoard {
-    .inputForm {
+.spinningBoard {
+  .body {
+    .spinningForm {
       padding: 5px;
+    }
+
+    .signupMsg {
+      padding: 10px;
     }
 
     .result {
       padding: 5px;
     }
   }
+}
 </style>
