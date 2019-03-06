@@ -1,5 +1,4 @@
 import db from '@/firebase';
-import { getKeyValue } from '@/utils/firestore';
 import { isEmpty } from '@/utils/collection';
 
 const COLLECTION_NAME = 'users';
@@ -21,7 +20,9 @@ class UserService {
     });
   };
 
-  create = (userId, fullName) => {
+  create = (userId, user) => {
+    const { fullName } = user;
+
     return this.getCollection().doc(userId).set({
       fullName,
       relationship: []
@@ -53,9 +54,7 @@ class UserService {
   getAllUserIds = (users) => {
     if (!users) return [];
 
-    return users.map((u) => {
-      return getKeyValue(u);
-    });
+    return Object.keys(users);
   }
 }
 

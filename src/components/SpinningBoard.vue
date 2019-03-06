@@ -34,7 +34,6 @@
 </template>
 
 <script>
-import { getKeyValue } from '@/utils/firestore';
 import { uniqueArray } from '@/utils/collection';
 import userService from '@/services/UserService';
 
@@ -59,10 +58,8 @@ export default {
   firestore() {
     return {
       users: {
-        // collection reference.
         ref: userService.getCollection(),
-        // [TODO] Try to bind the collection as an object to improve performance.
-        objects: false
+        objects: true
       }
     };
   },
@@ -75,23 +72,6 @@ export default {
       this.currentUserId = null;
       this.currentUser = null;
     },
-    spin: function(currentUserId) {
-      this.suggestedPartner = null;
-
-      const currentUser = this.users.find(u => {
-        return getKeyValue(u) === currentUserId;
-      });
-
-      if (!currentUser) {
-        this.currentUser = null;
-        return;
-      }
-
-      this.currentUser = currentUser;
-      this.findPartner(this.currentUser);
-
-      this.hasShowResult = true;
-    },
     viewResultMessage: function() {
       if (!this.suggestedPartner) {
         return "You've already caffeinated with everyone!";
@@ -101,6 +81,19 @@ export default {
       return `Get coffee with: ${
         this.suggestedPartner.fullName
       }, here’s how many times you’ve had coffee with them: ${numberOfRelationship}`;
+    },
+    spin: function(currentUserId) {
+      this.suggestedPartner = null;
+
+      this.currentUser = this.users[currentUserId] || null;
+
+      if (!this.currentUser) {
+        return;
+      }
+
+      this.findPartner(this.currentUser);
+
+      this.hasShowResult = true;
     },
     findPartner: function(currentUser) {
       if (!currentUser) {
@@ -128,17 +121,13 @@ export default {
       const suggestedPartnerId = userService.randomUser(suggestedPartnerIds);
       currentPartnerIds.push(suggestedPartnerId);
 
-      // FIXME Need to improve performance of finding suggested user
-      this.suggestedPartner = this.users.find(function(u) {
-        return getKeyValue(u) === suggestedPartnerId;
-      });
-
       // Add current user as a partner of suggested user, too
+      this.suggestedPartner = this.users[suggestedPartnerId];
       const suggestedPartners = this.suggestedPartner.relationship;
       suggestedPartners.push(this.currentUserId);
       this.suggestedPartner.relationship = uniqueArray(suggestedPartners);
 
-      userService.update(getKeyValue(currentUser), {
+      userService.update(this.currentUserId, {
         ...currentUser
       });
 
@@ -147,9 +136,9 @@ export default {
       });
     },
     addNewUser: function(userId) {
-      // We assume userId and fullname is the same
-      const fullName = userId;
-      userService.create(userId, fullName).then(() => {
+      userService.create(userId, {
+        fullName: userId // We assume userId and fullname is the same
+      }).then(() => {
         this.hasShowSignup = false;
         this.newUserId = null;
         this.currentUserId = userId;
