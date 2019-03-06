@@ -96,7 +96,7 @@ export default {
       this.currentUser = this.users[this.currentUserId] || null;
       this.hasShowResult = true;
 
-      if (!this.currentUser) {  
+      if (!this.currentUser) {
         return;
       }
 
