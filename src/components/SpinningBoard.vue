@@ -50,7 +50,7 @@ export default {
       users: [],
       currentUserId: null,
       currentUser: null,
-      suggestedUser: null,
+      suggestedPartner: null,
       newUserId: null,
       hasShowSignup: false,
       hasShowResult: false
@@ -76,7 +76,7 @@ export default {
       this.currentUser = null;
     },
     spin: function(currentUserId) {
-      this.suggestedUser = null;
+      this.suggestedPartner = null;
 
       const currentUser = this.users.find(u => {
         return getKeyValue(u) === currentUserId;
@@ -88,21 +88,21 @@ export default {
       }
 
       this.currentUser = currentUser;
-      this.getSuggestedUser(this.currentUser);
+      this.findPartner(this.currentUser);
 
       this.hasShowResult = true;
     },
     viewResultMessage: function() {
-      if (!this.suggestedUser) {
+      if (!this.suggestedPartner) {
         return "You've already caffeinated with everyone!";
       }
 
       const numberOfRelationship = this.currentUser.relationship.length;
       return `Get coffee with: ${
-        this.suggestedUser.fullName
+        this.suggestedPartner.fullName
       }, here’s how many times you’ve had coffee with them: ${numberOfRelationship}`;
     },
-    getSuggestedUser: function(currentUser) {
+    findPartner: function(currentUser) {
       if (!currentUser) {
         return null;
       }
@@ -120,30 +120,30 @@ export default {
       });
 
       if (suggestedPartnerIds.length === 0) {
-        this.suggestedUser = null;
+        this.suggestedPartner = null;
         return;
       }
 
       // Add new partner to current user
-      const suggestedUserId = userService.randomUser(suggestedPartnerIds);
-      currentPartnerIds.push(suggestedUserId);
+      const suggestedPartnerId = userService.randomUser(suggestedPartnerIds);
+      currentPartnerIds.push(suggestedPartnerId);
 
       // FIXME Need to improve performance of finding suggested user
-      this.suggestedUser = this.users.find(function(u) {
-        return getKeyValue(u) === suggestedUserId;
+      this.suggestedPartner = this.users.find(function(u) {
+        return getKeyValue(u) === suggestedPartnerId;
       });
 
       // Add current user as a partner of suggested user, too
-      const suggestedUserPartners = this.suggestedUser.relationship;
-      suggestedUserPartners.push(this.currentUserId);
-      this.suggestedUser.relationship = uniqueArray(suggestedUserPartners);
+      const suggestedPartners = this.suggestedPartner.relationship;
+      suggestedPartners.push(this.currentUserId);
+      this.suggestedPartner.relationship = uniqueArray(suggestedPartners);
 
       userService.update(getKeyValue(currentUser), {
         ...currentUser
       });
 
-      userService.update(suggestedUserId, {
-        ...this.suggestedUser
+      userService.update(suggestedPartnerId, {
+        ...this.suggestedPartner
       });
     },
     addNewUser: function(userId) {
