@@ -34,9 +34,7 @@
 </template>
 
 <script>
-import { uniqueArray } from '@/utils/collection';
 import userService from '@/services/UserService';
-
 import CoffeeTimePanel from './CoffeeTimePanel';
 
 export default {
@@ -73,6 +71,9 @@ export default {
       this.currentUser = null;
     },
     viewResultMessage: function() {
+      if (!this.currentUser) {
+        return "Your name doesn't exist";
+      }
       if (!this.suggestedPartner) {
         return "You've already caffeinated with everyone!";
       }
@@ -84,66 +85,55 @@ export default {
     },
     spin: function(currentUserId) {
       this.suggestedPartner = null;
+      this.hasShowResult = false;
 
-      this.currentUser = this.users[currentUserId] || null;
-
-      if (!this.currentUser) {
-        return;
-      }
-
-      this.findPartner(this.currentUser);
-
-      this.hasShowResult = true;
-    },
-    findPartner: function(currentUser) {
-      if (!currentUser) {
+      if (!currentUserId) {
         return null;
       }
 
-      const { relationship: currentPartnerIds } = currentUser;
-      const allUserIds = userService.getAllUserIds(this.users);
+      this.currentUserId = currentUserId.toLowerCase();
 
-      // Find partners
-      const suggestedPartnerIds = allUserIds.filter(curUserId => {
-        const index = currentPartnerIds.findIndex(reUserId => {
-          return reUserId === curUserId;
-        });
+      this.currentUser = this.users[this.currentUserId] || null;
+      this.hasShowResult = true;
 
-        return index === -1 && curUserId !== this.currentUserId;
-      });
+      if (!this.currentUser) {  
+        return;
+      }
 
-      if (suggestedPartnerIds.length === 0) {
+      this.findPartner(this.currentUser, this.users);
+    },
+    findPartner: function(currentUser, users) {
+      if (!currentUser) {
+        this.suggestedPartner = null;
+        return null;
+      }
+
+      const suggestedPartnerId = userService.findPartner(currentUser, users);
+
+      if (!suggestedPartnerId) {
         this.suggestedPartner = null;
         return;
       }
 
-      // Add new partner to current user
-      const suggestedPartnerId = userService.randomUser(suggestedPartnerIds);
-      currentPartnerIds.push(suggestedPartnerId);
-
-      // Add current user as a partner of suggested user, too
-      this.suggestedPartner = this.users[suggestedPartnerId];
-      const suggestedPartners = this.suggestedPartner.relationship;
-      suggestedPartners.push(this.currentUserId);
-      this.suggestedPartner.relationship = uniqueArray(suggestedPartners);
-
-      userService.update(this.currentUserId, {
-        ...currentUser
-      });
-
-      userService.update(suggestedPartnerId, {
-        ...this.suggestedPartner
-      });
+      this.suggestedPartner = users[suggestedPartnerId];
+      userService.updateRelations(currentUser, this.suggestedPartner);
     },
     addNewUser: function(userId) {
-      userService.create(userId, {
-        fullName: userId // We assume userId and fullname is the same
+      if (!userId) {
+        return;
+      }
+
+      const uid = userId.toLowerCase();
+
+      userService.create(uid, {
+        id: uid,
+        fullName: uid // We assume userId and fullname is the same
       }).then(() => {
         this.hasShowSignup = false;
         this.newUserId = null;
-        this.currentUserId = userId;
+        this.currentUserId = uid;
 
-        this.spin(userId);
+        this.spin(uid);
       });
     }
   }
