@@ -1,11 +1,11 @@
 # Coffee Time
 
-### Tech stack
+## Tech stack
 
 - VueJS (3.4.1)
 - Cloud Firestore
 
-### Project Structure
+## Project Structure
 
 ```sh
 + src/
@@ -24,7 +24,7 @@
 + vue.config.js --> A vue configuration file
 ```
 
-### Installation
+## Installation
 
 Install the dependencies and devDependencies and start the server.
 
@@ -46,11 +46,12 @@ Compiles and minifies for production
 $ yarn build 
 ```
 
-### Data model
+## Data model
 ```sh
 + users (collection)
-+ --- userId_1 (document)
-+ --- userId_2 (document)
++ --- userId_1 (document ID)
++ --- userId_2 (document ID)
++ --- + ---- id (field:string)(example: 'userId_2')
 + --- + ---- fullName (field:string)
 + --- + ---- relationship (field:array)
 + --- + ---- + --- 'userId_1' (string)
@@ -59,6 +60,7 @@ A User is represented by a User object as below:
 ```sh
 {
     useId_1: {
+        id: 'userId_1'
         fullName: 'userId_1',
         relationship: [
             'userId_2'
@@ -66,19 +68,24 @@ A User is represented by a User object as below:
     }
 }
 ```
-A UserId is a document ID in a collection. Assume UserId is the same User.*fullName* and unique in a whole system.
+User.id is a document ID in a collection
+Assume User.id is the same User.*fullName* and unique in a whole system.
 
 A User.*relationship* field represents persons already coffee with this User
 
-### Solution
+## Solution
 My approach is that I try to limit the number of requests to the BE by keeping the whole Users data on client side. We will get some advantages points:
  - Limit the price can be charged by Firebase (document reads, writes, bandwidth)
  - Reduce BE processing
- - Fast responses to Client behavior happen on UI
+ - Increase User experience
 
 One performance issue can happen if the Users data is too big. But in the context of this application, the number of employees in a company should small, so even fetching thousands of data can be accepted on the client side.
 
-### Implementation 
+I also bind whole User data as an Object in client side. The idea is that I want to map data as a Map(key, value) data structure in order to easy for look up a User by key (userId). A Map structure is:
+ - key: user Id (document ID)
+ - value: user data (document)
+
+## Implementation 
 #### Fetch Users and find a partner
 All Users will be fetched for the first time a page opens. We then only send a request to BE when:
 - Update User's relationship
@@ -93,6 +100,7 @@ That means User_A and User_B will coffee together :)
 #### Signup
 User also signup by clicking "Signup" link. The system will find a person that User can coffee with immediately righ after entering a username.
 
-### Component design approach
-I follow "Container and Presentational components" design and avoid have too many unrelated functions inside a component. We can put that "unrelated" functions in service/util or break to other components.
+## Component design approach
+I follow "Container and Presentational components" design.
+A Container component should have functions relate to UI handler, business logic should be put on a Service file. That makes the component code base smaller and we can test presentation and business functions separately
 

@@ -39,10 +39,12 @@ describe('SpinningBoard.vue', () => {
     wrapper.setData({
       hasShowResult: true,
       currentUser: {
+        id: 'user-001',
         fullName: 'User 001',
         relationship: ['user-002']
       },
-      suggestedUser: {
+      suggestedPartner: {
+        id: 'user-002',
         fullName: 'User 002',
         relationship: ['user-001']
       }
@@ -60,10 +62,11 @@ describe('SpinningBoard.vue', () => {
     wrapper.setData({
       hasShowResult: true,
       currentUser: {
+        id: 'user-001',
         fullName: 'User 001',
         relationship: ['user-002']
       },
-      suggestedUser: null
+      suggestedPartner: null
     });
 
     const htmlContent = wrapper.html();
@@ -76,10 +79,18 @@ describe('SpinningBoard.vue', () => {
     const wrapper = shallowMount(SpinningBoard);
 
     wrapper.setData({
-      users: [
-        { '.key': 'user-001', fullName: 'User 001', relationship: [] },
-        { '.key': 'user-002', fullName: 'User 002', relationship: [] }
-      ]
+      users: {
+        'user-001': {
+          id: 'user-001',
+          fullName: 'User 001',
+          relationship: []
+        },
+        'user-002': {
+          id: 'user-002',
+          fullName: 'User 002',
+          relationship: []
+        }
+      }
     });
 
     const vm = wrapper.vm;
@@ -88,24 +99,32 @@ describe('SpinningBoard.vue', () => {
     vm.spin('user-test-001');
 
     expect(vm.currentUser).toBe(null);
-    expect(vm.suggestedUser).toBe(null);
+    expect(vm.suggestedPartner).toBe(null);
   });
 
   it('[Behaviour] Invokes spin() with a user already exited - Found a partner to coffee with', () => {
     const wrapper = shallowMount(SpinningBoard);
 
     const enteredUser = {
-      '.key': 'user-001',
+      id: 'user-001',
       fullName: 'User 001',
       relationship: []
     };
 
     wrapper.setData({
       currentUserId: enteredUser['.key'],
-      users: [
-        { '.key': 'user-001', fullName: 'User 001', relationship: [] },
-        { '.key': 'user-002', fullName: 'User 002', relationship: [] }
-      ]
+      users: {
+        'user-001': {
+          id: 'user-001',
+          fullName: 'User 001',
+          relationship: []
+        },
+        'user-002': {
+          id: 'user-002',
+          fullName: 'User 002',
+          relationship: []
+        }
+      }
     });
 
     // Mock userService.getAllUserIds
@@ -116,15 +135,13 @@ describe('SpinningBoard.vue', () => {
 
     userServiceMock.getAllUserIds = getAllUserIdsMock;
 
-    vm.spin(enteredUser['.key']);
-
-    console.log('CurrentUser', vm.currentUser);
+    vm.spin(enteredUser.id);
 
     expect(vm.currentUser).not.toBe(null);
     expect(vm.currentUser.fullName).toBe('User 001');
 
     // Expect User 001 will coffee with User 002
-    expect(vm.suggestedUser.fullName).toBe('User 002');
+    expect(vm.suggestedPartner.fullName).toBe('User 002');
   });
 
   it('[Behaviour] Invokes spin() with a user already exited - NOT found a partner to coffee with', () => {
@@ -132,26 +149,38 @@ describe('SpinningBoard.vue', () => {
 
     // User 001 already caffeinated with everyone
     const enteredUser = {
-      '.key': 'user-001',
+      id: 'user-001',
       fullName: 'User 001',
       relationship: []
     };
 
     wrapper.setData({
-      currentUserId: enteredUser['.key'],
-      users: [
-        { '.key': 'user-001', fullName: 'User 001', relationship: ['user-002'] },
-        { '.key': 'user-002', fullName: 'User 002', relationship: ['user-001'] }
-      ]
+      currentUserId: enteredUser.id,
+      users: {
+        'user-001': {
+          id: 'user-001',
+          fullName: 'User 001',
+          relationship: [
+            'user-002'
+          ]
+        },
+        'user-002': {
+          id: 'user-002',
+          fullName: 'User 002',
+          relationship: [
+            'user-001'
+          ]
+        }
+      }
     });
 
     const vm = wrapper.vm;
 
-    vm.spin(enteredUser['.key']);
+    vm.spin(enteredUser.id);
 
     expect(wrapper.vm.currentUser).not.toBe(null);
     expect(wrapper.vm.currentUser.fullName).toBe('User 001');
 
-    expect(wrapper.vm.suggestedUser).toBe(null);
+    expect(wrapper.vm.suggestedPartner).toBe(null);
   });
 });

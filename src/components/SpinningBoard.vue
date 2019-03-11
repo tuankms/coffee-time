@@ -34,10 +34,7 @@
 </template>
 
 <script>
-import { getKeyValue } from '@/utils/firestore';
-import { uniqueArray } from '@/utils/collection';
 import userService from '@/services/UserService';
-
 import CoffeeTimePanel from './CoffeeTimePanel';
 
 export default {
@@ -50,7 +47,7 @@ export default {
       users: [],
       currentUserId: null,
       currentUser: null,
-      suggestedUser: null,
+      suggestedPartner: null,
       newUserId: null,
       hasShowSignup: false,
       hasShowResult: false
@@ -59,10 +56,8 @@ export default {
   firestore() {
     return {
       users: {
-        // collection reference.
         ref: userService.getCollection(),
-        // [TODO] Try to bind the collection as an object to improve performance.
-        objects: false
+        objects: true
       }
     };
   },
@@ -75,86 +70,70 @@ export default {
       this.currentUserId = null;
       this.currentUser = null;
     },
-    spin: function(currentUserId) {
-      this.suggestedUser = null;
-
-      const currentUser = this.users.find(u => {
-        return getKeyValue(u) === currentUserId;
-      });
-
-      if (!currentUser) {
-        this.currentUser = null;
-        return;
-      }
-
-      this.currentUser = currentUser;
-      this.getSuggestedUser(this.currentUser);
-
-      this.hasShowResult = true;
-    },
     viewResultMessage: function() {
-      if (!this.suggestedUser) {
+      if (!this.currentUser) {
+        return "Your name doesn't exist";
+      }
+      if (!this.suggestedPartner) {
         return "You've already caffeinated with everyone!";
       }
 
       const numberOfRelationship = this.currentUser.relationship.length;
       return `Get coffee with: ${
-        this.suggestedUser.fullName
+        this.suggestedPartner.fullName
       }, here’s how many times you’ve had coffee with them: ${numberOfRelationship}`;
     },
-    getSuggestedUser: function(currentUser) {
-      if (!currentUser) {
+    spin: function(currentUserId) {
+      this.suggestedPartner = null;
+      this.hasShowResult = false;
+
+      if (!currentUserId) {
         return null;
       }
 
-      const { relationship: currentPartnerIds } = currentUser;
-      const allUserIds = userService.getAllUserIds(this.users);
+      this.currentUserId = currentUserId.toLowerCase();
 
-      // Find partners
-      const suggestedPartnerIds = allUserIds.filter(curUserId => {
-        const index = currentPartnerIds.findIndex(reUserId => {
-          return reUserId === curUserId;
-        });
+      this.currentUser = this.users[this.currentUserId] || null;
+      this.hasShowResult = true;
 
-        return index === -1 && curUserId !== this.currentUserId;
-      });
-
-      if (suggestedPartnerIds.length === 0) {
-        this.suggestedUser = null;
+      if (!this.currentUser) {
         return;
       }
 
-      // Add new partner to current user
-      const suggestedUserId = userService.randomUser(suggestedPartnerIds);
-      currentPartnerIds.push(suggestedUserId);
+      this.findPartner(this.currentUser, this.users);
+    },
+    findPartner: function(currentUser, users) {
+      if (!currentUser) {
+        this.suggestedPartner = null;
+        return null;
+      }
 
-      // FIXME Need to improve performance of finding suggested user
-      this.suggestedUser = this.users.find(function(u) {
-        return getKeyValue(u) === suggestedUserId;
-      });
+      const suggestedPartnerId = userService.findPartner(currentUser, users);
 
-      // Add current user as a partner of suggested user, too
-      const suggestedUserPartners = this.suggestedUser.relationship;
-      suggestedUserPartners.push(this.currentUserId);
-      this.suggestedUser.relationship = uniqueArray(suggestedUserPartners);
+      if (!suggestedPartnerId) {
+        this.suggestedPartner = null;
+        return;
+      }
 
-      userService.update(getKeyValue(currentUser), {
-        ...currentUser
-      });
-
-      userService.update(suggestedUserId, {
-        ...this.suggestedUser
-      });
+      this.suggestedPartner = users[suggestedPartnerId];
+      userService.updateRelations(currentUser, this.suggestedPartner);
     },
     addNewUser: function(userId) {
-      // We assume userId and fullname is the same
-      const fullName = userId;
-      userService.create(userId, fullName).then(() => {
+      if (!userId) {
+        return;
+      }
+
+      const uid = userId.toLowerCase();
+
+      userService.create(uid, {
+        id: uid,
+        fullName: uid // We assume userId and fullname is the same
+      }).then(() => {
         this.hasShowSignup = false;
         this.newUserId = null;
-        this.currentUserId = userId;
+        this.currentUserId = uid;
 
-        this.spin(userId);
+        this.spin(uid);
       });
     }
   }
